@@ -1,0 +1,902 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Tracker</title>
+    <style>
+        :root {
+            --bg: #f7f8fb;
+            --panel: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --ring: #e2e8f0;
+            --shadow: 0 10px 20px rgba(2,8,23,.04);
+            --red: #fee2e2;
+            --red-text: #991b1b;
+            --amber: #fdecc8;
+            --amber-text: #92400e;
+            --yellow: #fef9c3;
+            --yellow-text: #854d0e;
+            --gray: #eef2f7;
+            --gray-text: #475569;
+            --green: #dcfce7;
+            --green-text: #166534;
+            --sky: #e0f2fe;
+            --violet: #ede9fe;
+            --fuchsia: #fae8ff;
+            --border: #e5e7eb;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0b1220;
+            --panel: #0f172a;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --ring: #1f2a44;
+            --shadow: 0 10px 20px rgba(0,0,0,.35);
+            --red: #3b0a0a;
+            --red-text: #fecaca;
+            --amber: #3b2a07;
+            --amber-text: #fde68a;
+            --yellow: #3b3407;
+            --yellow-text: #fef08a;
+            --gray: #111827;
+            --gray-text: #cbd5e1;
+            --green: #0b2e17;
+            --green-text: #bbf7d0;
+            --sky: #061e2c;
+            --violet: #1b1333;
+            --fuchsia: #2b0e2b;
+            --border: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+            background: linear-gradient(#fff,var(--bg)) no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+            color: var(--text);
+            transition: background .2s,color .2s
+        }
+
+        [data-theme="dark"] body {
+            background: linear-gradient(#020617,var(--bg));
+            background-attachment: fixed;
+            background-size: cover;
+        }
+
+        [data-theme="dark"] button.primary {
+            background: #4C326E; /* Your desired color */
+            color: #fff; /* Text color */
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 32px auto;
+            padding: 0 20px
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--ring);
+            border-radius: 16px;
+            box-shadow: var(--shadow)
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .title {
+            font-weight: 800;
+            font-size: 24px
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        input, select, button, textarea {
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--panel);
+            color: var(--text)
+        }
+
+            input[type="date"] {
+                padding: 9px 10px
+            }
+
+            button.primary {
+                background: var(--text);
+                color: #fff;
+                border-color: transparent;
+                cursor: pointer
+            }
+
+            button.secondary {
+                background: transparent;
+                color: var(--text);
+                border: 1px solid var(--ring);
+                cursor: pointer
+            }
+
+            button.ghost {
+                background: transparent;
+                color: var(--muted);
+                border-color: transparent;
+                cursor: pointer
+            }
+
+            button:disabled {
+                opacity: .6;
+                cursor: not-allowed
+            }
+
+        .panel {
+            gap: 20px;
+            padding: 14px
+        }
+
+        /* Stack toolbar into two rows */
+        .toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* space between top and bottom rows */
+        }
+
+        .toolbar-top {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .toolbar-bottom {
+            display: flex;
+            gap: 16px; /* a little more space between switches */
+            flex-wrap: wrap; /* wrap nicely on small screens */
+        }
+
+        /* Make the search input actually stretch on wide screens */
+        .toolbar-top .grow {
+            flex: 1 1 240px;
+            min-width: 200px;
+        }
+
+        .list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .task {
+            border: 1px solid var(--ring);
+            border-radius: 14px;
+            padding: 12px;
+            width: 100%;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            transition: .15s ease;
+            background: var(--panel)
+        }
+
+            .task:hover {
+                box-shadow: var(--shadow);
+                transform: translateY(-1px)
+            }
+
+            .task h3 {
+                margin: 0;
+                font-size: 15px
+            }
+
+        .badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .badge {
+            font-size: 11px;
+            border-radius: 999px;
+            padding: 3px 8px;
+            border: 1px solid transparent
+        }
+
+        .status-overdue {
+            background: var(--red);
+            color: var(--red-text);
+            border-color: #7f1d1d
+        }
+
+        .status-today {
+            background: var(--amber);
+            color: var(--amber-text);
+            border-color: #78350f
+        }
+
+        .status-soon {
+            background: var(--yellow);
+            color: var(--yellow-text);
+            border-color: #854d0e
+        }
+
+        .status-ok, .status-nodue {
+            background: var(--gray);
+            color: var(--gray-text);
+            border-color: #334155
+        }
+
+        .status-completed {
+            background: var(--green);
+            color: var(--green-text);
+            border-color: #065f46
+        }
+
+        .chip-low {
+            background: var(--sky);
+            border: 1px solid #0ea5e9;
+            color: #075985
+        }
+
+        .chip-medium {
+            background: var(--violet);
+            border: 1px solid #7c3aed;
+            color: #4c1d95
+        }
+
+        .chip-high {
+            background: var(--fuchsia);
+            border: 1px solid #d946ef;
+            color: #86198f
+        }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .chip-low {
+            color: #bae6fd; /* sky-200 */
+        }
+
+        [data-theme="dark"] .chip-medium {
+            color: #ddd6fe; /* violet-200 */
+        }
+
+        [data-theme="dark"] .chip-high {
+            color: #f5d0fe; /* fuchsia-200 */
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .line-through {
+            text-decoration: line-through;
+            color: #94a3b8
+        }
+
+        .grow {
+            flex: 1;
+            min-width: 200px
+        }
+
+        .right {
+            display: flex;
+            gap: 6px
+        }
+
+        .empty {
+            width: 100%;
+            padding: 26px;
+            text-align: center;
+            color: var(--muted);
+            border: 1px dashed var(--ring);
+            border-radius: 12px
+        }
+        /* dialog */
+        dialog {
+            border: none;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 0;
+            width: min(560px,calc(100% - 40px));
+            background: var(--panel);
+            color: var(--text)
+        }
+
+            dialog::backdrop {
+                background: rgba(0,0,0,.25)
+            }
+
+        .dlg-head {
+            padding: 16px 16px 8px;
+            border-bottom: 1px solid var(--ring)
+        }
+
+        .dlg-body {
+            padding: 16px;
+            display: grid;
+            gap: 10px
+        }
+
+        .dlg-foot {
+            padding: 12px 16px 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px
+        }
+
+        .switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <div class="title">Task Tracker</div>
+                <div class="subtitle">A Lightweight Desktop Application for Task Management</div>
+            </div>
+            <div class="row">
+                <input id="newTitle" placeholder="Add a task…" />
+                <input id="newDue" type="date" />
+                <select id="newPriority">
+                    <option value="high">High</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="low">Low</option>
+                </select>
+                <select id="newRepeat" title="Repeat">
+                    <option value="none" selected>Repeat: None</option>
+                    <option value="daily">Repeat: Daily</option>
+                    <option value="weekly">Repeat: Weekly</option>
+                    <option value="monthly">Repeat: Monthly</option>
+                </select>
+                <button class="primary" id="addBtn">Add</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="panel toolbar">
+                <div class="toolbar-top">
+                    <input id="q" class="grow" placeholder="Search tasks…" />
+                    <select id="filter">
+                        <option value="all">All</option>
+                        <option value="open">Open</option>
+                        <option value="completed">Completed</option>
+                        <option value="overdue">Overdue</option>
+                        <option value="today">Due today</option>
+                        <option value="soon">Due soon</option>
+                    </select>
+                    <select id="sort">
+                        <option value="due" selected>Sort by due</option>
+                        <option value="priority">Sort by priority</option>
+                        <option value="created">Sort by created</option>
+                    </select>
+                    <button class="secondary" id="tipsBtn">Tips</button>
+                </div>
+
+                <div class="toolbar-bottom">
+                    <span class="switch">
+                        <input type="checkbox" id="darkToggle" />
+                        <label for="darkToggle">Dark mode</label>
+                    </span>
+                    <span class="switch">
+                        <input type="checkbox" id="notifyToggle" />
+                        <label for="notifyToggle">Due notifications</label>
+                    </span>
+                    <span class="switch">
+                        <input type="checkbox" id="headsUpToggle" />
+                        <label for="headsUpToggle">Heads-up (1 day before)</label>
+                    </span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="list" id="list"></div>
+                <div class="empty" id="empty" style="display:none">No tasks match. Add a new task above or clear filters.</div>
+            </div>
+        </div>
+
+    </div>
+   
+
+    <div class="muted" style="text-align:center;margin-top:6px">A Portfolio Project by Tay McElroy</div>
+    </div>
+
+    <!-- Edit dialog -->
+    <dialog id="editDlg">
+        <div class="dlg-head"><strong>Edit task</strong></div>
+        <div class="dlg-body">
+            <label>Title<br /><input id="eTitle"></label>
+            <label>Due date<br /><input id="eDue" type="date"></label>
+            <label>
+                Priority<br />
+                <select id="ePriority">
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </label>
+            <label>
+                Repeat<br />
+                <select id="eRepeat">
+                    <option value="none">None</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </label>
+            <label>
+                Notes<br />
+                <textarea id="eNotes" rows="3" placeholder="Optional details"></textarea>
+            </label>
+        </div>
+        <div class="dlg-foot">
+            <button class="ghost" id="eCancel">Cancel</button>
+            <button class="primary" id="eSave">Save</button>
+        </div>
+    </dialog>
+
+    <!-- Tips dialog -->
+    <dialog id="tipsDlg">
+        <div class="dlg-head"><strong>Color Key</strong></div>
+        <div class="dlg-body" style="font-size:14px;line-height:1.5">
+            <div><span class="badge status-overdue">Overdue</span> Task due before today</div>
+            <div><span class="badge status-today">Due today</span> Task due today</div>
+            <div><span class="badge status-soon">Due soon</span> Due within 3 days</div>
+            <div><span class="badge status-ok">Scheduled</span> Due later than 3 days</div>
+            <div><span class="badge status-nodue">No due date</span> No due date set</div>
+            <div><span class="badge status-completed">Done</span> Completed</div>
+        </div>
+        <div class="dlg-foot">
+            <button class="primary" id="tipsClose">Close</button>
+        </div>
+    </dialog>
+
+    <script>
+        // ===== Utilities & persistence =====
+        const STORAGE_KEY = 'tay_task_tracker_html_v2';
+        const PREFS_KEY = 'tay_task_tracker_prefs_v1';
+
+        function todayISO() {
+            const d = new Date();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${d.getFullYear()}-${m}-${day}`;
+        }
+        function parseISO(s) { return s ? new Date(s + 'T00:00:00') : null; }
+
+        function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
+        function save(tasks) { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+
+        function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch { return {}; } }
+        function savePrefs(p) { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); }
+
+        function statusFor(t) {
+            if (t.completed) return 'completed';
+            if (!t.due) return 'nodue';
+            const due = parseISO(t.due);
+            const today = todayISO();
+            if (t.due === today) return 'today';
+            if (due < new Date(today + 'T00:00:00')) return 'overdue';
+            const diffDays = Math.ceil((due - new Date(today + 'T00:00:00')) / 86400000);
+            if (diffDays <= 3) return 'soon';
+            return 'ok';
+        }
+        function priorityRank(p) { return { high: 0, medium: 1, low: 2 }[p]; }
+
+        // ===== State =====
+        let tasks = load();
+        let query = '';
+        let filter = 'all';
+        let sortBy = 'due';
+        let editingId = null;
+        let prefs = Object.assign({ dark: false, notify: false, headsUp: false }, loadPrefs());
+
+        // ===== Elements =====
+        const listEl = document.getElementById('list');
+        const emptyEl = document.getElementById('empty');
+
+        const qEl = document.getElementById('q');
+        const filterEl = document.getElementById('filter');
+        const sortEl = document.getElementById('sort');
+
+        const newTitleEl = document.getElementById('newTitle');
+        const newDueEl = document.getElementById('newDue');
+        const headsUpToggle = document.getElementById('headsUpToggle');
+        const newPriorityEl = document.getElementById('newPriority');
+        const addBtn = document.getElementById('addBtn');
+
+        const editDlg = document.getElementById('editDlg');
+        const eTitle = document.getElementById('eTitle');
+        const eDue = document.getElementById('eDue');
+        const ePriority = document.getElementById('ePriority');
+        const eNotes = document.getElementById('eNotes');
+        const eCancel = document.getElementById('eCancel');
+        const eSave = document.getElementById('eSave');
+
+        const tipsDlg = document.getElementById('tipsDlg');
+        const tipsBtn = document.getElementById('tipsBtn');
+        const tipsClose = document.getElementById('tipsClose');
+
+        const darkToggle = document.getElementById('darkToggle');
+        const notifyToggle = document.getElementById('notifyToggle');
+
+        const newRepeatEl = document.getElementById('newRepeat');
+        const eRepeat = document.getElementById('eRepeat');
+
+        // ===== Dark mode init =====
+        function applyTheme() { document.documentElement.setAttribute('data-theme', prefs.dark ? 'dark' : 'light'); darkToggle.checked = !!prefs.dark; }
+        applyTheme();
+
+        // ===== Render =====
+        function render() {
+            let t = [...tasks];
+            if (query.trim()) {
+                const q = query.toLowerCase();
+                t = t.filter(x => x.title.toLowerCase().includes(q) || (x.notes || '').toLowerCase().includes(q));
+            }
+            if (filter === 'open') t = t.filter(x => !x.completed);
+            if (filter === 'completed') t = t.filter(x => x.completed);
+            if (filter === 'overdue') t = t.filter(x => statusFor(x) === 'overdue');
+            if (filter === 'today') t = t.filter(x => statusFor(x) === 'today');
+            if (filter === 'soon') t = t.filter(x => statusFor(x) === 'soon');
+
+            if (sortBy === 'due') {
+                t.sort((a, b) => {
+                    const ad = a.due ? parseISO(a.due).getTime() : Infinity;
+                    const bd = b.due ? parseISO(b.due).getTime() : Infinity;
+                    return ad - bd;
+                });
+            } else if (sortBy === 'priority') {
+                t.sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
+            } else if (sortBy === 'created') {
+                t.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+
+            listEl.innerHTML = '';
+            for (const x of t) {
+                const li = document.createElement('div');
+                li.className = 'task';
+
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = !!x.completed;
+                cb.addEventListener('change', () => toggleComplete(x.id));
+
+                const main = document.createElement('div');
+                main.className = 'grow';
+
+                const title = document.createElement('h3');
+                title.textContent = x.title;
+                if (x.completed) title.className = 'line-through';
+
+                const badges = document.createElement('div');
+                badges.className = 'badges';
+
+                const st = statusFor(x);
+                const statusMap = {
+                    overdue: ['status-overdue', 'Overdue'],
+                    today: ['status-today', 'Due today'],
+                    soon: ['status-soon', 'Due soon'],
+                    ok: ['status-ok', 'Scheduled'],
+                    nodue: ['status-nodue', 'No due date'],
+                    completed: ['status-completed', 'Done']
+                }[st];
+                const status = document.createElement('span');
+                status.className = 'badge ' + statusMap[0];
+                status.textContent = statusMap[1];
+
+                const chip = document.createElement('span');
+                chip.className = 'badge ' + ({ low: 'chip-low', medium: 'chip-medium', high: 'chip-high' }[x.priority]);
+                chip.textContent = x.priority[0].toUpperCase() + x.priority.slice(1);
+
+                badges.appendChild(status); badges.appendChild(chip);
+
+                const meta = document.createElement('div');
+                meta.className = 'muted';
+                meta.textContent = 'Due: ' + (x.due ? new Date(x.due + 'T00:00:00').toLocaleDateString() : 'No due date');
+
+                main.appendChild(title);
+                main.appendChild(badges);
+                main.appendChild(meta);
+
+                if (x.repeat && x.repeat !== 'none') {
+                    const rpt = document.createElement('div');
+                    rpt.className = 'muted';
+                    const labelMap = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+                    rpt.textContent = 'Repeats: ' + labelMap[x.repeat];
+                    main.appendChild(rpt);
+                }
+
+                if (x.notes) {
+                    const notes = document.createElement('div');
+                    notes.className = 'muted';
+                    notes.style.marginTop = '6px';
+                    notes.textContent = x.notes;
+                    main.appendChild(notes);
+                }
+
+                const right = document.createElement('div');
+                right.className = 'right';
+                const editBtn = document.createElement('button'); editBtn.className = 'secondary'; editBtn.textContent = 'Edit';
+                const delBtn = document.createElement('button'); delBtn.className = 'ghost'; delBtn.textContent = 'Delete';
+                editBtn.addEventListener('click', () => openEdit(x));
+                delBtn.addEventListener('click', () => removeTask(x.id));
+                right.appendChild(editBtn); right.appendChild(delBtn);
+
+                li.appendChild(cb); li.appendChild(main); li.appendChild(right);
+                listEl.appendChild(li);
+            }
+
+            emptyEl.style.display = t.length ? 'none' : 'block';
+        }
+
+        // ===== Actions =====
+
+        function toISODate(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+        function addDays(dateObj, days) {
+            const d = new Date(dateObj.getTime());
+            d.setDate(d.getDate() + days);
+            return d;
+        }
+        function addMonths(dateObj, months) {
+            const d = new Date(dateObj.getTime());
+            const day = d.getDate();
+            d.setMonth(d.getMonth() + months);
+            // Handle month-end rollover (e.g., Jan 31 → Feb)
+            while (d.getDate() < day) d.setDate(d.getDate() - 1);
+            return d;
+        }
+        /**
+         * Returns the next due date (ISO YYYY-MM-DD) strictly >= today
+         * based on current due and repeat rule. If current due is in the past,
+         * advances in steps of the repeat until it lands today or later.
+         */
+        function nextFromScheduled(currentDueISO, repeat) {
+            if (!repeat || repeat === 'none') return undefined;
+
+            const today = new Date(todayISO() + 'T00:00:00');
+
+            // Step function by rule
+            const step = (dt) => {
+                const d = new Date(dt.getTime());
+                if (repeat === 'daily') d.setDate(d.getDate() + 1);
+                else if (repeat === 'weekly') d.setDate(d.getDate() + 7);
+                else if (repeat === 'monthly') {
+                    const day = d.getDate();
+                    d.setMonth(d.getMonth() + 1);
+                    while (d.getDate() < day) d.setDate(d.getDate() - 1); // month-end safety
+                }
+                return d;
+            };
+
+            // If we have a scheduled due date, next = one step after that date.
+            // If no due date, use today as the base.
+            let base = currentDueISO ? new Date(currentDueISO + 'T00:00:00') : today;
+            let next = step(base);
+
+            // If that lands in the past (e.g. you completed a very old one), keep stepping forward
+            while (next < today) next = step(next);
+
+            return toISODate(next);
+        }
+
+
+
+        function addTask() {
+            const title = newTitleEl.value.trim();
+            const due = newDueEl.value || undefined;
+            const priority = newPriorityEl.value;
+            const repeat = newRepeatEl.value || 'none';
+            if (!title) return;
+            const t = { id: crypto.randomUUID(), title, due, notes: undefined, completed: false, priority, repeat, createdAt: new Date().toISOString(), notifiedForDate: null };
+            tasks = [t, ...tasks];
+            save(tasks);
+            newTitleEl.value = ''; newDueEl.value = ''; newPriorityEl.value = 'medium'; newRepeatEl.value = 'none';
+            render();
+        }
+        function toggleComplete(id) {
+            const t = tasks.find(x => x.id === id);
+            if (!t) return;
+
+            // If user is unchecking a completed task → just uncomplete it
+            if (t.completed) {
+                t.completed = false;
+                save(tasks);
+                window.tracker?.saveTasks(tasks); // keep background in sync if using Electron tray
+                render();
+                return;
+            }
+
+            // Mark as completed
+            t.completed = true;
+
+            // If recurring, create a NEW future instance based on the scheduled due date
+            if (t.repeat && t.repeat !== 'none') {
+                // Base next calc on the current due (or today if none)
+                const baseDue = t.due || todayISO();
+                // First get a date >= today
+                let next = nextFromScheduled(t.due, t.repeat);
+
+                // If next is today (and we just completed today’s), push once more
+                if (next === todayISO()) {
+                    const d = new Date(next + 'T00:00:00');
+                    if (t.repeat === 'daily') next = toISODate(addDays(d, 1));
+                    else if (t.repeat === 'weekly') next = toISODate(addDays(d, 7));
+                    else if (t.repeat === 'monthly') next = toISODate(addMonths(d, 1));
+                }
+
+                const newTask = {
+                    ...t,
+                    id: crypto.randomUUID(),
+                    completed: false,
+                    due: next,
+                    createdAt: new Date().toISOString(),
+                    notifiedForDate: null
+                };
+
+                // Put the new occurrence at the top
+                tasks = [newTask, ...tasks];
+            }
+
+            save(tasks);
+            window.tracker?.saveTasks(tasks); // if using Electron tray/background sync
+            render();
+        }
+        function removeTask(id) { tasks = tasks.filter(t => t.id !== id); save(tasks); render(); }
+
+        function openEdit(t) {
+            editingId = t.id;
+            eTitle.value = t.title; eDue.value = t.due || ''; ePriority.value = t.priority; eRepeat.value = t.repeat || 'none'; eNotes.value = t.notes || '';
+            editDlg.showModal();
+        }
+        function saveEdit() {
+            const patch = { title: eTitle.value.trim(), due: eDue.value || undefined, priority: ePriority.value, repeat: eRepeat.value || 'none', notes: eNotes.value.trim() || undefined, notifiedForDate: null };
+            tasks = tasks.map(t => t.id === editingId ? { ...t, ...patch } : t);
+            save(tasks); editDlg.close(); render();
+        }
+
+        // ===== Events =====
+        addBtn.addEventListener('click', addTask);
+        newTitleEl.addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+        qEl.addEventListener('input', e => { query = e.target.value; render(); });
+        filterEl.addEventListener('change', e => { filter = e.target.value; render(); });
+        sortEl.addEventListener('change', e => { sortBy = e.target.value; render(); });
+
+        eCancel.addEventListener('click', () => editDlg.close());
+        eSave.addEventListener('click', saveEdit);
+        tipsBtn.addEventListener('click', () => tipsDlg.showModal());
+        tipsClose.addEventListener('click', () => tipsDlg.close());
+
+        // ===== Dark mode toggle =====
+        darkToggle.addEventListener('change', () => {
+            prefs.dark = darkToggle.checked;
+            savePrefs(prefs);
+            applyTheme();
+        });
+        // System preference default on first run
+        if (typeof prefs.dark === 'undefined') {
+            prefs.dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            savePrefs(prefs);
+        }
+        applyTheme();
+
+        // ===== Notification helpers =====
+        async function ensurePermission() {
+            if (!('Notification' in window)) return false;
+            if (Notification.permission === 'granted') return true;
+            const res = await Notification.requestPermission();
+            return res === 'granted';
+        }
+        notifyToggle.checked = !!prefs.notify;
+        notifyToggle.addEventListener('change', async () => {
+            if (notifyToggle.checked) {
+                const ok = await ensurePermission();
+                if (ok) {
+                    prefs.notify = true;
+                    savePrefs(prefs);
+                    tickNotifications(true);
+                } else {
+                    notifyToggle.checked = false;
+                    prefs.notify = false;
+                    savePrefs(prefs);
+                    alert('Notifications are blocked by your browser.');
+                }
+            } else {
+                prefs.notify = false;
+                savePrefs(prefs);
+            }
+        });
+
+        headsUpToggle.checked = !!prefs.headsUp;
+        headsUpToggle.addEventListener('change', () => {
+            prefs.headsUp = headsUpToggle.checked;
+            savePrefs(prefs);
+            tickNotifications(true); // run a check immediately if turned on
+
+        });
+
+        function fire(title, body) {
+            try { new Notification(title, { body }); } catch (e) { console.warn('Notification failed', e); }
+        }
+        function tickNotifications(force) {
+            if (!('Notification' in window)) return;
+            if (!prefs.notify && !prefs.headsUp) return;          // nothing to do
+            if (Notification.permission !== 'granted') return;
+
+            const todayISOstr = todayISO();
+            const todayDate = new Date(todayISOstr + 'T00:00:00');
+
+            // ensure fields exist on older tasks
+            const ensureFields = (t) => {
+                if (t.notifiedForDate === undefined) t.notifiedForDate = null;         // for today/overdue
+                if (t.notifiedHeadsUpForDate === undefined) t.notifiedHeadsUpForDate = null; // for heads-up
+            };
+
+            for (const t of tasks) {
+                ensureFields(t);
+                if (t.completed || !t.due) continue;
+
+                const due = new Date(t.due + 'T00:00:00');
+                const diffDays = Math.ceil((due - todayDate) / 86400000);
+
+                // 3A) Heads-up (day before)
+                if (prefs.headsUp && diffDays === 1 && t.notifiedHeadsUpForDate !== todayISOstr) {
+                    try { new Notification('Heads-up for tomorrow', { body: `${t.title} — due ${t.due}` }); } catch { }
+                    t.notifiedHeadsUpForDate = todayISOstr; // only once per day
+                }
+
+                // 3B) Due today / Overdue (existing behavior)
+                if (prefs.notify) {
+                    const isToday = diffDays === 0;
+                    const isOverdue = diffDays < 0;
+                    if ((isToday || isOverdue) && t.notifiedForDate !== todayISOstr) {
+                        const title = isToday ? 'Task due today' : 'Task overdue';
+                        try { new Notification(title, { body: `${t.title} — due ${t.due}` }); } catch { }
+                        t.notifiedForDate = todayISOstr; // only once per day
+                    }
+                }
+            }
+
+            save(tasks);
+            if (force) render();
+        }
+
+        setInterval(tickNotifications, 60 * 1000); // check every minute
+        setTimeout(() => tickNotifications(true), 1000);
+
+        // ===== Init =====
+        newDueEl.min = todayISO();
+        render();
+    </script>
+</body>
+</html>
